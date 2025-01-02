@@ -14,14 +14,19 @@
 #include "esp_system.h"
 
 #include "drivers/INA219.h"
+#include "drivers/STUSB4500.h"
+#include "drivers/I2C_Slave.h"
 
 extern "C" void app_main()
 {
     printf("Hello world!\n");
-    INA219_init();
+    // INA219_init();
+    // STUSB4500_init();
+    I2C_Slave_init();
     while (1)
     {
-        printf("Bus voltage: %d V\n", INA219_getBusVoltage());
+        // printf("Bus voltage: %d mV\n", INA219_getBusVoltage());
+        
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
     
