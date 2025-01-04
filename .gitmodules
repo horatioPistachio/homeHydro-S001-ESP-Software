@@ -1,0 +1,3 @@
+[submodule "main/stusb4500"]
+	path = main/stusb4500
+	url = https://github.com/jefflongo/stusb4500.git

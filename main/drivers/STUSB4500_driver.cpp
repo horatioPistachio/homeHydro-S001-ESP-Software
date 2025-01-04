@@ -9,7 +9,7 @@
  * 
  */
 
-#include "STUSB4500.h"
+#include "STUSB4500_driver.h"
 #include <stdint.h>
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -17,6 +17,26 @@
 
 #include "driver/i2c_master.h"
 #include "driver/gpio.h"
+
+#include "stusb4500.h"
+
+
+
+
+static i2c_master_dev_handle_t i2c_dev_primary_handle;
+
+bool my_stusb4500_write(uint16_t addr, uint8_t reg, void const* buf, size_t len, void* context)
+{   
+    ESP_ERROR_CHECK(i2c_master_transmit(i2c_dev_primary_handle, (uint8_t*)buf, len, 1000));
+    
+    return true;
+}
+
+bool my_stusb4500_read(uint16_t addr, uint8_t reg, void* buf, size_t len, void* context)
+{
+    ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_dev_primary_handle, (uint8_t*)buf, len, (uint8_t*)buf, len, 1000));
+    return true;
+}
 
 void STUSB4500_init()
 {
@@ -45,7 +65,7 @@ void STUSB4500_init()
         .flags = {.disable_ack_check = false},
     };
 
-    i2c_master_dev_handle_t i2c_dev_primary_handle;
+    
     ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_primary_bus, &i2c_primary_device_config, &i2c_dev_primary_handle));
 
     gpio_config_t io_conf =
@@ -58,10 +78,37 @@ void STUSB4500_init()
     };
     ESP_ERROR_CHECK(gpio_config(&io_conf));
 
-    uint8_t reg = 0x2F;
-    uint8_t data = 0x00;
 
-    ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_dev_primary_handle, &reg, 1, &data, 1, 1000));
+    stusb4500_t my_stusb4500 = {
+        .addr = 0x28,
+        .write = my_stusb4500_write,
+        .read = my_stusb4500_read,
+        .context = NULL
+    };
 
-    ESP_LOGI("STUSB4500", "Device ID: 0x%02x", data);
+    uint8_t buf[64];
+    stusb4500_nvm_read(&my_stusb4500, buf);
+    for (int i = 0; i < 40; i++)
+    {
+        printf("0x%02x ", buf[i]);
+        if ((i+1)%8 == 0)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n");
+    printf("nvm completed\n");
+
+    // stusb4500_nvm_write(&my_stusb4500, buf);
 }
+
+
+//     uint8_t reg = 0x2F;
+//     uint8_t data = 0x00;
+
+
+
+//     ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_dev_primary_handle, &reg, 1, &data, 1, 1000));
+
+//     ESP_LOGI("STUSB4500", "Device ID: 0x%02x", data);
+// }

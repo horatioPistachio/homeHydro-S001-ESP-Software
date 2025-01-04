@@ -16,5 +16,10 @@
     "IDF_CCACHE_ENABLE": "1",
     "ESP_ROM_ELF_DIR": "C:\\Users\\bazdo\\.espressif\\tools\\esp-rom-elfs\\20240305/"
   },
-  "idf.gitPathWin": "C:\\Users\\bazdo\\.espressif\\tools\\idf-git\\2.39.2\\cmd\\git.exe"
+  "idf.gitPathWin": "C:\\Users\\bazdo\\.espressif\\tools\\idf-git\\2.39.2\\cmd\\git.exe",
+  "files.associations": {
+    "assert.h": "c",
+    "string.h": "c",
+    "stusb4500.h": "c"
+  }
 }
