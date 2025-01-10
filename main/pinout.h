@@ -31,5 +31,8 @@
 #define FAN_1_PWM GPIO_NUM_41
 #define FAN_2_PWM GPIO_NUM_42
 
+#define INA219_ADDR 0x40
+#define STUSB4500_ADDR 0x28
+
 
 #endif // PINOUT_H

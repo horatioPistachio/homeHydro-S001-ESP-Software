@@ -1,5 +1,5 @@
 #include "stusb4500.h"
-
+#include <stdio.h>
 // STUSB4500 registers
 #define STUSB_PORT_STATUS 0x0EUL
 #define STUSB_PRT_STATUS 0x16UL
@@ -96,6 +96,7 @@ static bool
     do {
         if (config->get_ms && (config->get_ms() - start > TIMEOUT_MS)) return false;
         if (!dev->read(dev->addr, STUSB_PE_FSM, &pd_state, 1, dev->context)) return false;
+        printf("PD State: %d\n", pd_state);
     } while (pd_state != STUSB_PE_SNK_READY);
 
     return true;
@@ -203,12 +204,14 @@ bool stusb4500_negotiate(
     // Sanity check to see if STUSB4500 is there
     if (!is_present(dev)) return false;
 
-    // Check that cable is attached
+    // Check that cable is attached, this doesn;t check if cable is attached, it only check if the sink is in the attached state
+    // CC_STATUS register (0x11) should be used. bit 4 indicates a source is connected
     if (
       !dev->read(dev->addr, STUSB_PORT_STATUS, buffer, 1, dev->context) ||
       !(buffer[0] & STUSB_ATTACH))
+      {
         return false;
-
+      }
     // Force transmission of source capabilities if not responding to an STUSB_ATTACH interrupt
     if (!on_interrupt) {
         if (!wait_until_ready_with_timeout(dev, config)) return false;

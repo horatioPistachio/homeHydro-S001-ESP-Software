@@ -12,6 +12,15 @@
 #ifndef I2C_SLAVE_H
 #define I2C_SLAVE_H
 
+typedef enum {
+    CHIP_ID_REGISTER,
+    VERSION_REGISTER,
+    
+    NUM_REGISTERS,
+
+} i2c_slave_register_t;
+
+
 void I2C_Slave_init( void );
 
 

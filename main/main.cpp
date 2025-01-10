@@ -17,6 +17,8 @@
 #include "drivers/STUSB4500_driver.h"
 #include "drivers/I2C_Slave.h"
 
+#include "tasks/startup_task.h"
+
 
 // #include "stusb4500/include/stusb4500.h"
 
@@ -26,16 +28,16 @@ extern "C" void app_main()
 {
     printf("Hello world!\n");
     // INA219_init();
-    STUSB4500_init();
+    // STUSB4500_init();
     
     // I2C_Slave_init();
-
+    init_startup_task();
 
 
     while (1)
     {
         // printf("Bus voltage: %d mV\n", INA219_getBusVoltage());
-        
+        run_startup_task();
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
     
