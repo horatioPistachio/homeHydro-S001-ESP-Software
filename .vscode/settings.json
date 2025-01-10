@@ -20,6 +20,7 @@
   "files.associations": {
     "assert.h": "c",
     "string.h": "c",
-    "stusb4500.h": "c"
+    "stusb4500.h": "c",
+    "array": "cpp"
   }
 }

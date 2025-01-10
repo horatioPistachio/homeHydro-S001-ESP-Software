@@ -15,6 +15,8 @@
 
 #include "driver/gpio.h"
 
+#define CHIP_ID 0x45
+#define VERSION 0x01
 
 #define I2C_SCL GPIO_NUM_1
 #define I2C_SDA GPIO_NUM_2
