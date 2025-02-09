@@ -17,6 +17,7 @@
 #include "drivers/STUSB4500_driver.h"
 #include "drivers/I2C_Slave.h"
 #include "drivers/pump_driver.h"
+#include "drivers/status_led_driver.h"
 
 #include "tasks/startup_task.h"
 
@@ -36,6 +37,10 @@ extern "C" void app_main()
     init_startup_task();
     pump_init();
 
+    status_led_init();
+
+    status_led_red_set(255);
+
     xLastWakeTime = xTaskGetTickCount();
 
 
@@ -44,6 +49,8 @@ extern "C" void app_main()
         // printf("Bus voltage: %d mV\n", INA219_getBusVoltage());
         run_startup_task();
         xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
+        status_led_red_toggle();
+        status_led_green_toggle();
 
     }
     
