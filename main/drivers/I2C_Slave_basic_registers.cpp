@@ -10,9 +10,11 @@
  */
 
 #include "I2C_Slave_basic_registers.h"
-#include "../pinout.h"
+
 #include <stdio.h>
 
+#include "../pinout.h"
+#include "pump_driver.h"
 
 static uint8_t chip_id = 0x11;
 
@@ -31,4 +33,15 @@ void set_version(uint8_t *data)
 {
     printf("Setting version to %d\n", *data);
     chip_id = *data;
+}
+
+
+void get_pump_state(uint8_t *data)
+{
+    *data = pump_get_duty();
+}
+
+void set_pump_state(uint8_t *data)
+{
+    pump_set_duty(data[0]);
 }

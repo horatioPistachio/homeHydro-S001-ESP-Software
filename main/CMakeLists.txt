@@ -5,5 +5,6 @@ idf_component_register(SRCS "main.cpp"
                         "drivers/stusb4500.c"
                         "drivers/stusb4500_nvm.c"
                         "drivers/I2C_Slave_basic_registers.cpp"
+                        "drivers/pump_driver.cpp"
                         "tasks/startup_task.cpp"
                     INCLUDE_DIRS "")

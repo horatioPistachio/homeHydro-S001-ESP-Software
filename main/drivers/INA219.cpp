@@ -79,6 +79,7 @@ uint16_t INA219_getBusVoltage()
     return  ((uint16_t)(read_buffer[0] << 5) | ((uint16_t)read_buffer[1]) >> 3) * 4;
 }
 
+
 float INA219_getShuntVoltage();
 
 float INA219_getCurrent();

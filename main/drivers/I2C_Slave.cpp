@@ -60,6 +60,7 @@ std::array<i2c_slave_action_functions_t, NUM_REGISTERS> i2c_slave_action_functio
         {nullptr, nullptr, 0},         // FIRST_REGISTER
         {get_chip_id, nullptr, 1},     // CHIP_ID_REGISTER
         {get_version, set_version, 1}, // VERSION_REGISTER
+        {get_pump_state, set_pump_state, 1}, // PUMP_STATE_REGISTER
     }};
 
 i2c_slave_action_functions_t *active_register;

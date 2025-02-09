@@ -16,12 +16,14 @@
 #include "drivers/INA219.h"
 #include "drivers/STUSB4500_driver.h"
 #include "drivers/I2C_Slave.h"
+#include "drivers/pump_driver.h"
 
 #include "tasks/startup_task.h"
 
 
 // #include "stusb4500/include/stusb4500.h"
 
+TickType_t xLastWakeTime;
 
 
 extern "C" void app_main()
@@ -32,13 +34,17 @@ extern "C" void app_main()
     
     // I2C_Slave_init();
     init_startup_task();
+    pump_init();
+
+    xLastWakeTime = xTaskGetTickCount();
 
 
     while (1)
     {
         // printf("Bus voltage: %d mV\n", INA219_getBusVoltage());
         run_startup_task();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
+
     }
     
 }

@@ -23,4 +23,8 @@ void get_version(uint8_t *data);
 
 void set_version(uint8_t *data);
 
+void get_pump_state(uint8_t *data);
+
+void set_pump_state(uint8_t *data);
+
 #endif // I2C_SLAVE_BASIC_REGISTERS_H
