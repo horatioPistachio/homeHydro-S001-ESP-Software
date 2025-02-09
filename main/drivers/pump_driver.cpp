@@ -27,7 +27,8 @@ void pump_init( void )
         .duty_resolution  = LEDC_TIMER_8_BIT,
         .timer_num        = LEDC_TIMER_0,
         .freq_hz          = 4000,  // Set output frequency at 4 kHz
-        .clk_cfg          = LEDC_AUTO_CLK
+        .clk_cfg          = LEDC_AUTO_CLK,
+        .deconfigure    = false,
     };
     ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
 
@@ -39,7 +40,9 @@ void pump_init( void )
         .intr_type      = LEDC_INTR_DISABLE,
         .timer_sel      = LEDC_TIMER_0,
         .duty           = 0, // Set duty to 0%
-        .hpoint         = 0
+        .hpoint         = 0,
+        .sleep_mode     = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,
+        .flags          = { .output_invert = 0 },
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 }

@@ -39,7 +39,6 @@ extern "C" void app_main()
 
     status_led_init();
 
-    status_led_red_set(255);
 
     xLastWakeTime = xTaskGetTickCount();
 
@@ -50,7 +49,6 @@ extern "C" void app_main()
         run_startup_task();
         xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
         status_led_red_toggle();
-        status_led_green_toggle();
 
     }
     
