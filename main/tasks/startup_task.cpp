@@ -23,6 +23,7 @@
 typedef enum { 
                 STATE_INITIAL,
                 STATE_NEGOTIATE_PD,
+                STATE_AWAIT_PD_NEGOTIATION,
                 STATE_5V_POWER,
                 STATE_9V_POWER,
                 STATE_AWAIT_PI_START,
@@ -39,6 +40,7 @@ typedef state_t state_func_t( instance_data_t *data );
 
 state_t do_state_initial( instance_data_t *data );
 state_t do_state_negotiate_pd( instance_data_t *data );
+state_t do_state_await_pd_negotiation( instance_data_t *data );
 state_t do_state_5v_power( instance_data_t *data );
 state_t do_state_9v_power( instance_data_t *data );
 state_t do_state_await_pi_start( instance_data_t *data );
@@ -48,6 +50,7 @@ state_t do_boot_timeout( instance_data_t *data );
 state_func_t* const state_table[NUM_STATES] = {
     do_state_initial,
     do_state_negotiate_pd,
+    do_state_await_pd_negotiation,
     do_state_5v_power,
     do_state_9v_power,
     do_state_await_pi_start,
@@ -125,7 +128,15 @@ state_t do_state_initial( instance_data_t *data )
     
     ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_primary_bus, &i2c_ina219_device_config, &ina219_i2c_handle));
 
+    return STATE_9V_POWER; // raspberry pi does negotiation
+    // return STATE_NEGOTIATE_PD;
+    
+}
 
+
+state_t do_state_negotiate_pd( instance_data_t *data )
+{
+    
     uint8_t buf[16];
     
     buf[0] = 0x2F;
@@ -151,14 +162,13 @@ state_t do_state_initial( instance_data_t *data )
     buf[1] = 0x26;
     ESP_ERROR_CHECK(i2c_master_transmit(stusb4500_i2c_handle, buf, 2, 1000));
     // ets_delay_us(1000);
-
-    return STATE_NEGOTIATE_PD;
+    printf("negotiating PD\n");
+    return STATE_AWAIT_PD_NEGOTIATION;
 }
 
-
-state_t do_state_negotiate_pd( instance_data_t *data )
+state_t do_state_await_pd_negotiation( instance_data_t *data )
 {
-    printf("negotiating PD\n");
+    
     uint8_t write_buffer[1] = {0x02};
     uint8_t read_buffer[2] = {0,0};
 
@@ -170,16 +180,20 @@ state_t do_state_negotiate_pd( instance_data_t *data )
     {
         return STATE_9V_POWER;
     }
-    else if (data->timeout == 1 && bus_voltage < 6000)
+    else if (data->timeout >= 3 && bus_voltage < 6000)
     {
         data->timeout = 0;
         return STATE_5V_POWER;
+    }
+    else
+    {
+        data->timeout++;
+        return STATE_INITIAL;
     }
     
     
 
     return current_state;
-    
 }
 
 state_t do_state_5v_power( instance_data_t *data )

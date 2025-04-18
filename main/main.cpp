@@ -18,6 +18,7 @@
 #include "drivers/I2C_Slave.h"
 #include "drivers/pump_driver.h"
 #include "drivers/status_led_driver.h"
+#include "drivers/EC_driver.h"
 
 #include "tasks/startup_task.h"
 
@@ -36,11 +37,18 @@ extern "C" void app_main()
     // I2C_Slave_init();
     init_startup_task();
     pump_init();
+    init_ec_driver();
 
     status_led_init();
 
+    float tds = get_TDS_value();
+    int water_level = get_water_level();
+
+    printf("TDS: %f\n", tds);
+    printf("Water level: %d\n", water_level);
 
     xLastWakeTime = xTaskGetTickCount();
+    
 
 
     while (1)

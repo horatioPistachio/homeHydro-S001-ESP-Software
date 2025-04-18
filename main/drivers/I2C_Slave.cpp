@@ -49,21 +49,27 @@ QueueHandle_t i2c_slave_queue;
 
 typedef struct
 {
-    void (*get_slave_data)(uint8_t *data);
-    void (*set_slave_data)(uint8_t *data);
+    void (*get_slave_data)(void *data);
+    void (*set_slave_data)(void *data);
     size_t register_size;
 } i2c_slave_action_functions_t;
 
+
+
 /* Callback table for the i2c commands */
+/* {getter, setter, length} */
 std::array<i2c_slave_action_functions_t, NUM_REGISTERS> i2c_slave_action_functions = {
     {
-        {nullptr, nullptr, 0},         // FIRST_REGISTER
-        {get_chip_id, nullptr, 1},     // CHIP_ID_REGISTER
-        {get_version, set_version, 1}, // VERSION_REGISTER
-        {get_pump_state, set_pump_state, 1}, // PUMP_STATE_REGISTER
+        {nullptr, nullptr, 0},                  // FIRST_REGISTER
+        {get_chip_id, nullptr, sizeof(uint8_t)},              // CHIP_ID_REGISTER
+        {get_version, set_version, sizeof(uint8_t)},          // VERSION_REGISTER
+        {get_pump_state, set_pump_state, sizeof(uint8_t)},    // PUMP_STATE_REGISTER
+        {get_water_level, nullptr, sizeof(uint8_t)},          // WATER_LEVEL_REGISTER
+        {get_TDS, nullptr, sizeof(float)},      // TDS_REGISTER
     }};
 
 i2c_slave_action_functions_t *active_register;
+
 
 static IRAM_ATTR bool i2c_slave_receive_callback(i2c_slave_dev_handle_t channel, const i2c_slave_rx_done_event_data_t *edata, void *user_data);
 static IRAM_ATTR bool i2c_slave_request_callback(i2c_slave_dev_handle_t channel, const i2c_slave_request_event_data_t *edata, void *user_data);

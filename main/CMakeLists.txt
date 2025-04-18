@@ -7,5 +7,6 @@ idf_component_register(SRCS "main.cpp"
                         "drivers/I2C_Slave_basic_registers.cpp"
                         "drivers/pump_driver.cpp"
                         "drivers/status_led_driver.cpp"
+                        "drivers/EC_driver.cpp"
                         "tasks/startup_task.cpp"
                     INCLUDE_DIRS "")
