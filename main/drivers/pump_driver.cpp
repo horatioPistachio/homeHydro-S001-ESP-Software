@@ -26,7 +26,7 @@ void pump_init( void )
         .speed_mode       = LEDC_MODE,
         .duty_resolution  = LEDC_TIMER_8_BIT,
         .timer_num        = LEDC_TIMER_0,
-        .freq_hz          = 4000,  // Set output frequency at 4 kHz
+        .freq_hz          = 300000,  // Set output frequency at 300 kHz, this frequency must be kept high. else the pump wont start
         .clk_cfg          = LEDC_AUTO_CLK,
         .deconfigure    = false,
     };
