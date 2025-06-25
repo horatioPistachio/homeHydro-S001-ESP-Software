@@ -31,4 +31,8 @@ void get_water_level(void *data);
 
 void get_TDS(void *data);
 
+void set_flood_state(void *data);
+
+void get_flood_state(void *data);
+
 #endif // I2C_SLAVE_BASIC_REGISTERS_H

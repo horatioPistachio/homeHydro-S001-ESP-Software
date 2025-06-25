@@ -21,6 +21,11 @@ void init_ec_driver(void);
 
 float get_TDS_value(void);
 
+/**
+ * @brief Get the water level object
+ * 
+ * @return uint8_t the water level in percentage (0-100%)
+ */
 uint8_t get_water_level(void);
 
 #endif // EC_DRIVER_H

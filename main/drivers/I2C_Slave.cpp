@@ -60,12 +60,12 @@ typedef struct
 /* {getter, setter, length} */
 std::array<i2c_slave_action_functions_t, NUM_REGISTERS> i2c_slave_action_functions = {
     {
-        {nullptr, nullptr, 0},                  // FIRST_REGISTER
-        {get_chip_id, nullptr, sizeof(uint8_t)},              // CHIP_ID_REGISTER
-        {get_version, set_version, sizeof(uint8_t)},          // VERSION_REGISTER
-        {get_pump_state, set_pump_state, sizeof(uint8_t)},    // PUMP_STATE_REGISTER
-        {get_water_level, nullptr, sizeof(uint8_t)},          // WATER_LEVEL_REGISTER
-        {get_TDS, nullptr, sizeof(float)},      // TDS_REGISTER
+        {nullptr, nullptr, 0},                                  // FIRST_REGISTER       0x00
+        {get_chip_id, nullptr, sizeof(uint8_t)},                // CHIP_ID_REGISTER0    0x01
+        {get_version, set_version, sizeof(uint8_t)},            // VERSION_REGISTER     0x02
+        {get_pump_state, set_pump_state, sizeof(uint8_t)},      // PUMP_STATE_REGISTER  0x03
+        {get_water_level, nullptr, sizeof(uint8_t)},            // WATER_LEVEL_REGISTER 0x04
+        {get_TDS, nullptr, sizeof(float)},                      // TDS_REGISTER         0x05
     }};
 
 i2c_slave_action_functions_t *active_register;
