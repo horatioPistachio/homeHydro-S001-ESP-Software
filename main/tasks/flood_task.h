@@ -23,7 +23,6 @@ typedef enum {
 
 void init_flood_task();
 
-void flood_task();
 
 flood_state_t flood_status();
 

@@ -23,10 +23,20 @@
 uint8_t red_duty = 0;
 uint8_t green_duty = 0;
 
+static uint8_t initialized = 0; // Flag to check if the status LED driver is initialized
 
 
+/**
+ * @brief Initialize the status LED driver.
+ * 
+ */
 void status_led_init( void )
 {
+    if (initialized) {
+        printf("Status LED driver already initialized.\n");
+        return; // If already initialized, do nothing
+    }
+    initialized = 1; // Set the initialized flag to true
     // Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_LOW_SPEED_MODE,
@@ -74,6 +84,11 @@ void status_led_init( void )
     // ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2));
 }
 
+/**
+ * @brief Set the red status LED duty cycle.
+ * 
+ * @param duty Duty cycle value (0-255)
+ */
 void status_led_red_set( uint8_t duty )
 {
     ESP_ERROR_CHECK(ledc_set_duty(STATUS_LEDC_MODE, RED_STATUS_LEDC_CHANNEL, duty));
@@ -81,6 +96,12 @@ void status_led_red_set( uint8_t duty )
     red_duty = duty;
 }
 
+/**
+ * @brief Toggle the red status LED duty cycle.
+ * 
+ * If the red LED is off, it will be turned on to full brightness (255).
+ * If the red LED is on, it will be turned off (0).
+ */
 void status_led_red_toggle()
 {
     if (red_duty == 0)
@@ -93,6 +114,11 @@ void status_led_red_toggle()
     }
 }
 
+/**
+ * @brief Set the green status LED duty cycle.
+ * 
+ * @param duty Duty cycle value (0-255)
+ */
 void status_led_green_set( uint8_t duty )
 {
     ESP_ERROR_CHECK(ledc_set_duty(STATUS_LEDC_MODE, GREEN_STATUS_LEDC_CHANNEL, duty));
@@ -100,6 +126,12 @@ void status_led_green_set( uint8_t duty )
     green_duty = duty;
 }
 
+/**
+ * @brief Toggle the green status LED duty cycle.
+ * 
+ * If the green LED is off, it will be turned on to full brightness (255).
+ * If the green LED is on, it will be turned off (0).
+ */
 void status_led_green_toggle()
 {
     if (green_duty == 0)

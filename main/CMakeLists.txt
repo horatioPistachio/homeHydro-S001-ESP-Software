@@ -9,4 +9,5 @@ idf_component_register(SRCS "main.cpp"
                         "drivers/status_led_driver.cpp"
                         "drivers/EC_driver.cpp"
                         "tasks/startup_task.cpp"
+                        "tasks/flood_task.cpp"
                     INCLUDE_DIRS "")

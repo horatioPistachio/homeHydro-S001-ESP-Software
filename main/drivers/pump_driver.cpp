@@ -19,8 +19,19 @@
 #define LEDC_MODE LEDC_LOW_SPEED_MODE
 #define LEDC_CHANNEL LEDC_CHANNEL_0
 
+static uint8_t initialized = 0; // Flag to check if the pump driver is initialized
+
+/**
+ * @brief Initialize the pump driver.
+ * 
+ */
 void pump_init( void )
 {
+    if (initialized) {
+        printf("Pump driver already initialized.\n");
+        return; // If already initialized, do nothing
+    }
+    initialized = 1; // Set the initialized flag to true
     // Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_MODE,
@@ -47,6 +58,12 @@ void pump_init( void )
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 }
 
+
+/**
+ * @brief Set the pump duty cycle
+ * 
+ * @param duty Duty cycle value (0-255)
+ */
 void pump_set_duty( uint8_t duty )
 {
     ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty));
@@ -54,6 +71,11 @@ void pump_set_duty( uint8_t duty )
     printf("Pump duty set to %d\n", duty);
 }
 
+/**
+ * @brief Get the current pump duty cycle.
+ * 
+ * @return uint8_t The current duty cycle value (0-255)
+ */
 uint8_t pump_get_duty( void )
 {
     uint32_t duty = ledc_get_duty(LEDC_MODE, LEDC_CHANNEL);

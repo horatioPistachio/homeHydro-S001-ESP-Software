@@ -17,7 +17,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-TickType_t xLastWakeTime;
+static TickType_t flood_task_xLastWakeTime;
 
 
 typedef struct instance_data{
@@ -30,6 +30,8 @@ flood_state_t do_state_init( instance_data_t *data );
 flood_state_t do_state_await_flood_signal( instance_data_t *data );
 flood_state_t do_state_flooding( instance_data_t *data );
 
+static void flood_task(void *arg);
+
 state_func_t* const flood_state_table[NUM_STATES] = {
     do_state_init,
     do_state_await_flood_signal,
@@ -37,24 +39,27 @@ state_func_t* const flood_state_table[NUM_STATES] = {
 };
 
 flood_state_t current_flood_state;
-instance_data_t state_data_instance;
-instance_data_t *state_data = &state_data_instance;
+instance_data_t flood_state_data_instance;
+instance_data_t *flood_state_data = &flood_state_data_instance;
 
 void init_flood_task()
 {
     current_flood_state = INIT;
-    state_data->timeout = 0;
+    flood_state_data->timeout = 0;
     pump_init();
     init_ec_driver();
+
+    xTaskCreate(flood_task, "flood_task", 2048, NULL, 5, NULL);
+    printf("Flood task initialized\n");
 }
 
-void flood_task()
+static void flood_task(void *arg)
 {
-    xLastWakeTime = xTaskGetTickCount();
+    flood_task_xLastWakeTime = xTaskGetTickCount();
     while(1)
     {
-        current_flood_state = flood_state_table[current_flood_state]( state_data );
-        xTaskDelayUntil(&xLastWakeTime, 500 / portTICK_PERIOD_MS);
+        current_flood_state = flood_state_table[current_flood_state]( flood_state_data );
+        xTaskDelayUntil(&flood_task_xLastWakeTime, 500 / portTICK_PERIOD_MS);
     }
 }
 
@@ -76,12 +81,14 @@ flood_state_t do_state_flooding( instance_data_t *data )
 {
     // check for water level to ensure water is in the tank
     uint8_t water_level = get_water_level();
-    if (water_level < 10) // if water level is below 10%, stop
+    printf("Current water level: %d\n", water_level);
+    if (water_level < 5) // if water level is below 10%, stop
     {
         printf("Water level too low, stopping pump\n");
         pump_set_duty(0); // stop the pump
         return AWAIT_FLOOD_SIGNAL; // return to awaiting flood signal state
     }
+    return FLOODING; // continue flooding
 }
 
 /**
@@ -102,8 +109,8 @@ void begin_flooding()
 {
     printf("Beginning flooding\n");
     current_flood_state = FLOODING;
-    pump_set_duty(100); // set pump to full duty
-    state_data->timeout = 0; // reset timeout
+    pump_set_duty(255); // set pump to full duty
+    flood_state_data->timeout = 0; // reset timeout
 }
 
 /**

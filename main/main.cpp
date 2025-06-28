@@ -20,6 +20,7 @@
 #include "drivers/status_led_driver.h"
 #include "drivers/EC_driver.h"
 
+#include "tasks/flood_task.h"
 #include "tasks/startup_task.h"
 
 
@@ -38,6 +39,7 @@ extern "C" void app_main()
     init_startup_task();
     pump_init();
     init_ec_driver();
+    init_flood_task();
 
     status_led_init();
 
@@ -48,13 +50,12 @@ extern "C" void app_main()
     printf("Water level: %d\n", water_level);
 
     xLastWakeTime = xTaskGetTickCount();
-    
-
 
     while (1)
     {
         // printf("Bus voltage: %d mV\n", INA219_getBusVoltage());
         run_startup_task();
+
         xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
         status_led_red_toggle();
 
