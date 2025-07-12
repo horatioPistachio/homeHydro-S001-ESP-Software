@@ -23,18 +23,22 @@
 // Note that these value will need to be calibrated for your specific EC meter and water level sensor
 #define EC_DISTANCE_FULL_TANK 1.35 //cm
 #define EC_DISTANCE_EMPTY_TANK 3.64 //cm
+#define EC_MIN_WATER_LEVEL 0.5 // cm (minimum water level for the EC meter to function properly)
+#define EC_ELECTRODE_DIAMETER 0.15 // cm (diameter of the EC electrodes)
+#define EC_ELECTRODE_MAX_LENGTH 4.3 // cm (length of the EC electrodes)
 #define EC_ELECTRODE_AREA (0.15*4.3) // cm^2 (cross-sectional area of the EC electrodes, 0.15 cm diameter, 4.3 cm length)
 #define EC_VOLTAGE 3.3 //v
 #define EC_RESISTANCE 1000 // Ohms
 
-#define SAMPLE_SIZE 20 // Number of samples to average for the EC value
+#define SAMPLE_SIZE 1 // Number of samples to average for the EC value
 
 static esp_err_t set_TDS_power(uint8_t power);
 static esp_err_t set_water_level_power(uint8_t power);
 
 adc_oneshot_unit_handle_t  EC_adc_handle = NULL;
 
-static float last_ec_value_seimens = 0.0;
+static double last_ec_value_seimens = 0.0;
+static double last_water_level = 100.0; // Variable to store the last water level value
 
 static uint8_t initialized = 0; // Flag to check if the EC driver is initialized
 
@@ -71,7 +75,7 @@ void init_ec_driver(void)
     ESP_ERROR_CHECK (adc_oneshot_new_unit(&EC_adc_config, &EC_adc_handle));
 
     adc_oneshot_chan_cfg_t EC_adc_channel_config = {
-        .atten = ADC_ATTEN_DB_11,
+        .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT, // anything other than default will cause a crash. believe default to be 11 bits.
     };
     ESP_ERROR_CHECK (adc_oneshot_config_channel(EC_adc_handle, EC_WATER_LEVEL_ANALOG_IN, &EC_adc_channel_config)); // EC water level channel
@@ -94,7 +98,7 @@ float get_TDS_value(void)
     vTaskDelay(100 / portTICK_PERIOD_MS); // Wait for the EC meter to stabilize
 
     for (int i = 0; i < SAMPLE_SIZE; i++) {  
-        vTaskDelay(20 / portTICK_PERIOD_MS); // Wait for the EC meter to stabilize
+        vTaskDelay(10 / portTICK_PERIOD_MS); // Wait for the EC meter to stabilize
         ESP_ERROR_CHECK(adc_oneshot_read(EC_adc_handle, EC_TDS_ANALOG_IN, &(raw_values[i]) )); // Read the raw value from the ADC
     }
     set_TDS_power(0); // Power off the EC meter
@@ -115,18 +119,21 @@ float get_TDS_value(void)
     double variance = sum_of_squared_diff / SAMPLE_SIZE;
     // Calculate the standard deviation (square root of the variance)
     double std_dev = std::sqrt(variance);
-    printf("TDS Raw Stats: Avg=%.2f, StdDev=%.2f\n", average_raw, std_dev);
+    // printf("TDS Raw Stats: Avg=%.2f, StdDev=%.2f\n", average_raw, std_dev);
     // --- End of Standard Deviation Calculation ---
 
     // Convert the average raw value to voltage (0-3.3V)
     // Note: The ADC bitwidth is 13-bit for ESP32-S2, so the max value is 8191
-    float ec_value_volts = (average_raw * 3.3) / 8191.0;
+    double ec_value_volts = (average_raw * 3.3) / 8191.0;
 
-    float resistivity = ec_value_volts * EC_RESISTANCE / (EC_VOLTAGE - ec_value_volts); // Calculate the resistivity in Ohms
+    double resistance = ec_value_volts * EC_RESISTANCE / (EC_VOLTAGE - ec_value_volts);
+     // Calculate the resistivity in Ohms
     // Calculate the EC value in mSeimens/cm
     // EC (mS/cm) = resistivity (Ohms) * cross-sectional area (cm^2) / length (cm)
-    double EC_seimens = resistivity * EC_ELECTRODE_AREA / EC_DISTANCE_FULL_TANK; // Calculate the EC value in mS/cm
-    printf("EC value: %.2f mS/cm\n", EC_seimens); // Debugging output
+    double resistivity = EC_ELECTRODE_DIAMETER* EC_ELECTRODE_MAX_LENGTH*resistance*last_water_level/(EC_DISTANCE_EMPTY_TANK+ (EC_DISTANCE_EMPTY_TANK-EC_DISTANCE_FULL_TANK)*(last_water_level + 1)/2.0); // Calculate the resistivity in Ohms
+    double EC_seimens = 1/ resistivity * 1000; // Convert to mS/cm (1 S = 1000 mS)
+    
+    // printf("EC value: %.2f mS/cm\n", EC_seimens); // Debugging output
     
     last_ec_value_seimens = EC_seimens; // Store the last EC value for reference
     return EC_seimens; // Return the EC value in volts
@@ -172,14 +179,17 @@ uint8_t get_water_level(void)
     // Convert the average raw value to voltage (0-3.3V)
     double water_level_voltage = (average_raw * 3.3) / 8191.0; // Convert the raw value to voltage
 
-    double denominator = (EC_DISTANCE_EMPTY_TANK - EC_DISTANCE_FULL_TANK) * (water_level_voltage - EC_VOLTAGE);
+    double resistance = water_level_voltage * EC_RESISTANCE / (EC_VOLTAGE - water_level_voltage);
+    double resistivity_numerator = EC_ELECTRODE_DIAMETER* EC_ELECTRODE_MAX_LENGTH*resistance*last_water_level;
+    double resistivity_denominator = EC_DISTANCE_EMPTY_TANK+ (EC_DISTANCE_EMPTY_TANK-EC_DISTANCE_FULL_TANK)*(last_water_level + 1)/2.0; // Calculate the resistivity in Ohms
     double water_level = 0.0;
-    if (fabs(denominator) < 1e-6) {
+    if (fabs(resistivity_denominator) < 1e-6) {
         printf("Warning: Division by zero avoided in water level calculation.\n");
         water_level = 0.0; // or set to a default/fallback value
     } else {
-        water_level = 100 * (last_ec_value_seimens * water_level_voltage * EC_RESISTANCE + EC_DISTANCE_EMPTY_TANK * (water_level_voltage - EC_VOLTAGE)) / denominator;
+        water_level = 100 * resistivity_numerator / resistivity_denominator; // Calculate the water level in percentage
     }
+    last_water_level = water_level; // Store the last water level value for reference
     return (uint8_t)water_level; // Return the water level in percentage
 }
 

@@ -50,6 +50,8 @@ extern "C" void app_main()
     printf("Water level: %d\n", water_level);
 
     xLastWakeTime = xTaskGetTickCount();
+    // begin_flooding();
+
 
     while (1)
     {
@@ -58,6 +60,8 @@ extern "C" void app_main()
 
         xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
         status_led_red_toggle();
+        printf("TDS: %f\n", get_TDS_value());
+        
 
     }
     

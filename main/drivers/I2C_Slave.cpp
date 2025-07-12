@@ -66,6 +66,7 @@ std::array<i2c_slave_action_functions_t, NUM_REGISTERS> i2c_slave_action_functio
         {get_pump_state, set_pump_state, sizeof(uint8_t)},      // PUMP_STATE_REGISTER  0x03
         {get_water_level, nullptr, sizeof(uint8_t)},            // WATER_LEVEL_REGISTER 0x04
         {get_TDS, nullptr, sizeof(float)},                      // TDS_REGISTER         0x05
+        {get_flood_state, set_flood_state, sizeof(uint8_t)},    // FLOOD_STATE_REGISTER 0x06
     }};
 
 i2c_slave_action_functions_t *active_register;
