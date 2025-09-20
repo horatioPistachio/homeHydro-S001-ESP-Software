@@ -125,7 +125,14 @@ float get_TDS_value(void)
     // Convert the average raw value to voltage (0-3.3V)
     // Note: The ADC bitwidth is 13-bit for ESP32-S2, so the max value is 8191
     double ec_value_volts = (average_raw * 3.3) / 8191.0;
-
+    if (ec_value_volts > 3.2) {
+        printf("Warning: resistance reading is very high (%.2f V). Check sensor connections.\n", ec_value_volts);
+        return  -1;
+    }
+    else if (ec_value_volts < 0.1) {
+        printf("Warning: resistance reading is very low (%.2f V). Check sensor connections.\n", ec_value_volts);
+        return -2;
+    }
     double resistance = ec_value_volts * EC_RESISTANCE / (EC_VOLTAGE - ec_value_volts);
      // Calculate the resistivity in Ohms
     // Calculate the EC value in mSeimens/cm

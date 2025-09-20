@@ -186,6 +186,12 @@ Examples:
 - For I2C slave changes: verify with a host I2C master reading/writing the new register.
 - For timing-sensitive code: prefer `xTaskDelayUntil` to maintain fixed cadence.
 
+## Documentation
+- Update this README with any new tasks, drivers, or major changes.
+- Add comments in code for non-obvious logic, especially around state machines and hardware interactions.
+- Follow Doxygen-style comments for public APIs.
+
+
 ## Future enhancements (optional for AI)
 
 - Add `Kconfig.projbuild` under `main/` to make calibration constants configurable at build time (EC electrode geometry, thresholds).
@@ -195,3 +201,5 @@ Examples:
 ---
 
 By following this guide, Copilot (and humans!) can make consistent, safe changes that build and run on the first try. When in doubt, prefer small PRs and keep changes local to the relevant driver/task.
+
+

@@ -22,6 +22,11 @@
 
 #include "tasks/flood_task.h"
 #include "tasks/startup_task.h"
+#include "pinout.h"
+
+#if ENABLE_EC_CALIBRATION_TASK
+#include "tasks/ec_calibration_task.h"
+#endif
 
 
 // #include "stusb4500/include/stusb4500.h"
@@ -39,6 +44,10 @@ extern "C" void app_main()
     init_startup_task();
     pump_init();
     init_ec_driver();
+    
+#if ENABLE_EC_CALIBRATION_TASK
+    ec_calibration_task_init();
+#endif
     init_flood_task();
 
     status_led_init();
@@ -46,8 +55,8 @@ extern "C" void app_main()
     float tds = get_TDS_value();
     int water_level = get_water_level();
 
-    printf("TDS: %f\n", tds);
-    printf("Water level: %d\n", water_level);
+    // printf("TDS: %f\n", tds);
+    // printf("Water level: %d\n", water_level);
 
     xLastWakeTime = xTaskGetTickCount();
     // begin_flooding();
@@ -60,7 +69,7 @@ extern "C" void app_main()
 
         xTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
         status_led_red_toggle();
-        printf("TDS: %f\n", get_TDS_value());
+        // printf("TDS: %f\n", get_TDS_value());
         
 
     }

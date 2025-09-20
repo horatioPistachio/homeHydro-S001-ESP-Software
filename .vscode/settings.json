@@ -1,6 +1,6 @@
 {
   "C_Cpp.intelliSenseEngine": "default",
-  "idf.portWin": "COM12",
+  "idf.portWin": "COM6",
   "idf.adapterTargetName": "esp32s2",
   "idf.openOcdConfigs": [
     "interface/ftdi/esp32_devkitj_v1.cfg",
@@ -22,5 +22,6 @@
     "string.h": "c",
     "stusb4500.h": "c",
     "array": "cpp"
-  }
+  },
+  "idf.pythonInstallPath": "C:\\Users\\bazdo\\.espressif\\tools\\idf-python\\3.11.2\\python.exe"
 }

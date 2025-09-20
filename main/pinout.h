@@ -39,5 +39,17 @@
 #define INA219_ADDR 0x40
 #define STUSB4500_ADDR 0x28
 
+// Calibration task compile-time controls (safe defaults)
+#ifndef ENABLE_EC_CALIBRATION_TASK
+#define ENABLE_EC_CALIBRATION_TASK 0  // set to 1 to enable calibration mode
+#endif
+
+#ifndef EC_CAL_TASK_PERIOD_MS
+#define EC_CAL_TASK_PERIOD_MS 5000
+#endif
+
+#ifndef EC_CAL_TASK_ALPHA
+#define EC_CAL_TASK_ALPHA 0.2f
+#endif
 
 #endif // PINOUT_H

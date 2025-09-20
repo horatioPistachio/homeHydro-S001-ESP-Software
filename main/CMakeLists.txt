@@ -10,4 +10,5 @@ idf_component_register(SRCS "main.cpp"
                         "drivers/EC_driver.cpp"
                         "tasks/startup_task.cpp"
                         "tasks/flood_task.cpp"
+                        "tasks/ec_calibration_task.cpp"
                     INCLUDE_DIRS "")
