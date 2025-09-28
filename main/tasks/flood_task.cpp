@@ -82,7 +82,7 @@ flood_state_t do_state_flooding( instance_data_t *data )
     // check for water level to ensure water is in the tank
     uint8_t water_level = get_water_level();
     printf("Current water level: %d\n", water_level);
-    if (water_level < 5) // if water level is below 10%, stop
+    if (water_level > 220) // if water level is below 10%, stop
     {
         printf("Water level too low, stopping pump\n");
         pump_set_duty(0); // stop the pump

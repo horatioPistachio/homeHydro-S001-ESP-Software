@@ -52,4 +52,8 @@
 #define EC_CAL_TASK_ALPHA 0.2f
 #endif
 
+#ifndef PUMP_USE_PWM
+#define PUMP_USE_PWM 0
+#endif
+
 #endif // PINOUT_H

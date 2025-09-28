@@ -330,6 +330,7 @@ uint8_t get_water_level(void)
     }
     last_water_level = water_level; // Store the last water level value for reference
     return (uint8_t)water_level; // Return the water level in percentage
+    
 }
 
 
