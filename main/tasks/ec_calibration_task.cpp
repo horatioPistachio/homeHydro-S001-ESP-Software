@@ -25,7 +25,7 @@ void ec_calibration_task_init(void)
 static void ec_cal_task(void *arg)
 {
     // Print CSV header once
-    printf("Time (s), TDS Raw (mS/cm), TDS EMA (mS/cm), Water Level Raw (%%), Water Level EMA (%%)\n");
+    printf("Time (s), TDS (V), Water level (V) TDS Raw (mS/cm), TDS EMA (mS/cm), Water Level Raw (%%), Water Level EMA (%%)\n");
 
     TickType_t last_wake = xTaskGetTickCount();
 
@@ -39,6 +39,8 @@ static void ec_cal_task(void *arg)
         // Read raw values
         float tds_raw = get_TDS_value();
         uint8_t water_raw_u8 = get_water_level();
+        float tds_v_raw = get_TDS_voltage_raw();
+        float water_v_raw = get_water_level_voltage_raw();
         float water_raw = static_cast<float>(water_raw_u8);
 
         if (first)
@@ -57,10 +59,10 @@ static void ec_cal_task(void *arg)
         uint32_t t_s = xTaskGetTickCount() / configTICK_RATE_HZ;
 
         // CSV line
-        printf("%lu, %.3f, %.3f, %u, %.1f\n", (unsigned long)t_s, tds_raw, ema_tds, (unsigned)water_raw_u8, ema_water);
+        printf("%lu, %.3f, %.3f, %.3f, %.3f, %u, %.1f\n", (unsigned long)t_s/10,tds_v_raw, water_v_raw,tds_raw, ema_tds, (unsigned)water_raw_u8, ema_water);
         // Human-readable line
-        printf("[EC CAL] %lus – TDS: %.3f mS/cm (raw), %.3f mS/cm (EMA) | Water Level: %u %% (raw), %.1f %% (EMA)\n",
-               (unsigned long)t_s, tds_raw, ema_tds, (unsigned)water_raw_u8, ema_water);
+        // printf("[EC CAL] %lus – TDS: %.3f mS/cm (raw), %.3f mS/cm (EMA) | Water Level: %u %% (raw), %.1f %% (EMA)\n",
+            //    (unsigned long)t_s, tds_raw, ema_tds, (unsigned)water_raw_u8, ema_water);
 
         vTaskDelayUntil(&last_wake, EC_CAL_TASK_PERIOD_MS / portTICK_PERIOD_MS);
     }

@@ -41,11 +41,11 @@
 
 // Calibration task compile-time controls (safe defaults)
 #ifndef ENABLE_EC_CALIBRATION_TASK
-#define ENABLE_EC_CALIBRATION_TASK 0  // set to 1 to enable calibration mode
+#define ENABLE_EC_CALIBRATION_TASK 0  //set to 1 to enable calibration mode
 #endif
 
 #ifndef EC_CAL_TASK_PERIOD_MS
-#define EC_CAL_TASK_PERIOD_MS 5000
+#define EC_CAL_TASK_PERIOD_MS 10000
 #endif
 
 #ifndef EC_CAL_TASK_ALPHA

@@ -34,8 +34,14 @@
 
 static esp_err_t set_TDS_power(uint8_t power);
 static esp_err_t set_water_level_power(uint8_t power);
+static bool init_adc_calibration(adc_unit_t unit, adc_channel_t channel, adc_cali_handle_t *out_handle, adc_atten_t atten);
+static double convert_raw_to_voltage(float average_raw, bool calibrated, adc_cali_handle_t cal_handle, const char *channel_name);
 
 adc_oneshot_unit_handle_t  EC_adc_handle = NULL;
+static adc_cali_handle_t tds_cali_handle = NULL;
+static adc_cali_handle_t water_level_cali_handle = NULL;
+static bool tds_calibrated = false;
+static bool water_level_calibrated = false;
 
 static double last_ec_value_seimens = 0.0;
 static double last_water_level = 100.0; // Variable to store the last water level value
@@ -81,8 +87,80 @@ void init_ec_driver(void)
     ESP_ERROR_CHECK (adc_oneshot_config_channel(EC_adc_handle, EC_WATER_LEVEL_ANALOG_IN, &EC_adc_channel_config)); // EC water level channel
     ESP_ERROR_CHECK (adc_oneshot_config_channel(EC_adc_handle, EC_TDS_ANALOG_IN, &EC_adc_channel_config)); // EC TDS channel
 
+    water_level_calibrated = init_adc_calibration(ADC_UNIT_1, EC_WATER_LEVEL_ANALOG_IN, &water_level_cali_handle, EC_adc_channel_config.atten);
+    tds_calibrated = init_adc_calibration(ADC_UNIT_1, EC_TDS_ANALOG_IN, &tds_cali_handle, EC_adc_channel_config.atten);
 
     printf("EC driver initialized.\n");
+}
+
+static bool init_adc_calibration(adc_unit_t unit, adc_channel_t channel, adc_cali_handle_t *out_handle, adc_atten_t atten)
+{
+    if (out_handle == NULL) {
+        return false;
+    }
+
+    esp_err_t ret = ESP_FAIL;
+#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
+    adc_cali_curve_fitting_config_t cali_config = {
+        .unit_id = unit,
+        .chan = channel,
+        .atten = atten,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+    };
+    ret = adc_cali_create_scheme_curve_fitting(&cali_config, out_handle);
+#elif ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
+    adc_cali_line_fitting_config_t cali_config = {
+        .unit_id = unit,
+        .atten = atten,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+    };
+    ret = adc_cali_create_scheme_line_fitting(&cali_config, out_handle);
+#else
+    (void)unit;
+    (void)channel;
+    (void)atten;
+    printf("ADC calibration scheme not supported on this target.\n");
+    return false;
+#endif
+
+    if (ret == ESP_OK) {
+        printf("ADC calibration enabled on channel %d.\n", channel);
+        return true;
+    }
+
+    if (ret == ESP_ERR_NOT_SUPPORTED) {
+        printf("Warning: eFuse not burnt, skipping ADC calibration on channel %d.\n", channel);
+    } else {
+        printf("Warning: failed to initialize ADC calibration on channel %d (err=0x%x).\n", channel, ret);
+    }
+
+    *out_handle = NULL;
+    return false;
+}
+
+static double convert_raw_to_voltage(float average_raw, bool calibrated, adc_cali_handle_t cal_handle, const char *channel_name)
+{
+    double voltage = 0.0;
+    bool voltage_calibrated = false;
+
+    if (calibrated && cal_handle != NULL) {
+        int voltage_mv = 0;
+        esp_err_t cal_ret = adc_cali_raw_to_voltage(cal_handle, static_cast<int>(std::lround(average_raw)), &voltage_mv);
+        if (cal_ret == ESP_OK) {
+            voltage = static_cast<double>(voltage_mv) / 1000.0;
+            voltage_calibrated = true;
+        } else if (channel_name != nullptr) {
+            printf("Warning: adc_cali_raw_to_voltage failed for %s channel (err=0x%x). Falling back to manual conversion.\n", channel_name, cal_ret);
+        } else {
+            printf("Warning: adc_cali_raw_to_voltage failed (err=0x%x). Falling back to manual conversion.\n", cal_ret);
+        }
+    }
+
+    if (!voltage_calibrated) {
+        voltage = (average_raw * 3.3) / 8191.0;
+    }
+
+    return voltage;
 }
 
 /**
@@ -124,7 +202,7 @@ float get_TDS_value(void)
 
     // Convert the average raw value to voltage (0-3.3V)
     // Note: The ADC bitwidth is 13-bit for ESP32-S2, so the max value is 8191
-    double ec_value_volts = (average_raw * 3.3) / 8191.0;
+    double ec_value_volts = convert_raw_to_voltage(average_raw, tds_calibrated, tds_cali_handle, "TDS");
     if (ec_value_volts > 3.2) {
         printf("Warning: resistance reading is very high (%.2f V). Check sensor connections.\n", ec_value_volts);
         return  -1;
@@ -144,6 +222,60 @@ float get_TDS_value(void)
     
     last_ec_value_seimens = EC_seimens; // Store the last EC value for reference
     return EC_seimens; // Return the EC value in volts
+}
+
+/**
+ * @brief Get the raw EC probe voltage in volts. Powers the probe, samples
+ * the ADC and applies calibration if available.
+ *
+ * @return float The measured probe voltage in volts.
+ */
+float get_TDS_voltage_raw(void)
+{
+    int raw_values[SAMPLE_SIZE] = {0};
+
+    set_TDS_power(1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+
+    for (int i = 0; i < SAMPLE_SIZE; ++i) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        ESP_ERROR_CHECK(adc_oneshot_read(EC_adc_handle, EC_TDS_ANALOG_IN, &(raw_values[i])));
+    }
+
+    set_TDS_power(0);
+
+    long long sum = std::accumulate(raw_values, raw_values + SAMPLE_SIZE, 0LL);
+    float average_raw = static_cast<float>(sum) / SAMPLE_SIZE;
+
+    double voltage = convert_raw_to_voltage(average_raw, tds_calibrated, tds_cali_handle, "TDS");
+    return static_cast<float>(voltage);
+}
+
+/**
+ * @brief Get the raw water level probe voltage in volts. Powers the sensor,
+ * samples the ADC and applies calibration if available.
+ *
+ * @return float The measured water level probe voltage in volts.
+ */
+float get_water_level_voltage_raw(void)
+{
+    int raw_values[SAMPLE_SIZE] = {0};
+
+    set_water_level_power(1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+
+    for (int i = 0; i < SAMPLE_SIZE; ++i) {
+        vTaskDelay(20 / portTICK_PERIOD_MS);
+        ESP_ERROR_CHECK(adc_oneshot_read(EC_adc_handle, EC_WATER_LEVEL_ANALOG_IN, &(raw_values[i])));
+    }
+
+    set_water_level_power(0);
+
+    long long sum = std::accumulate(raw_values, raw_values + SAMPLE_SIZE, 0LL);
+    float average_raw = static_cast<float>(sum) / SAMPLE_SIZE;
+
+    double voltage = convert_raw_to_voltage(average_raw, water_level_calibrated, water_level_cali_handle, "water level");
+    return static_cast<float>(voltage);
 }
 
 /**
@@ -180,11 +312,11 @@ uint8_t get_water_level(void)
     }
     double variance = sum_of_squared_diff / SAMPLE_SIZE;
     double std_dev = std::sqrt(variance);
-    printf("Water Level Raw Stats: Avg=%.2f, StdDev=%.2f\n", average_raw, std_dev);
+    // printf("Water Level Raw Stats: Avg=%.2f, StdDev=%.2f\n", average_raw, std_dev);
     // --- End of Calculation ---
 
     // Convert the average raw value to voltage (0-3.3V)
-    double water_level_voltage = (average_raw * 3.3) / 8191.0; // Convert the raw value to voltage
+    double water_level_voltage = convert_raw_to_voltage(average_raw, water_level_calibrated, water_level_cali_handle, "water level");
 
     double resistance = water_level_voltage * EC_RESISTANCE / (EC_VOLTAGE - water_level_voltage);
     double resistivity_numerator = EC_ELECTRODE_DIAMETER* EC_ELECTRODE_MAX_LENGTH*resistance*last_water_level;

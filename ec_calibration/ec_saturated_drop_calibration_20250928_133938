@@ -1,0 +1,47 @@
+{
+  "generated_at_utc": "2025-09-28T03:39:38.572964Z",
+  "data_source": "C:\\Users\\bazdo\\Documents\\Git_Working_Directory\\homeHydro-S001-ESP-Software\\data\\raw_data_ec_calibration.csv",
+  "measurement_mode": "voltage",
+  "parameters": {
+    "data_csv_path": "C:\\Users\\bazdo\\Documents\\Git_Working_Directory\\homeHydro-S001-ESP-Software\\data\\raw_data_ec_calibration.csv",
+    "V0_ml": 500.0,
+    "E0_uScm": 327.0,
+    "E0_temp_C": 25.0,
+    "E_sat_uScm": 292000.0,
+    "E_sat_temp_C": 25.0,
+    "v_drop_ml": 0.05,
+    "drop_volume_sweep_ml": null,
+    "alpha_per_C": 0.02,
+    "T_C": 25.0,
+    "tds_factor": 0.5,
+    "divider_supply_v": 3.3,
+    "divider_r1_ohms": 1000.0,
+    "exclude_outliers": true,
+    "outlier_z_threshold": 2.5,
+    "export_dir": "C:\\Users\\bazdo\\Documents\\Git_Working_Directory\\homeHydro-S001-ESP-Software\\ec_calibration",
+    "export_basename": "ec_saturated_drop_calibration",
+    "notes": [
+      "Data collected with saturated NaCl drops into 500 mL tap water.",
+      "Target calibration range extends to ~20 mS/cm."
+    ]
+  },
+  "calibration": {
+    "kind": "voltage_linear",
+    "slope_A": -5.676173536613296,
+    "intercept_B": 14.028962615612192,
+    "metrics": {
+      "rmse": 0.4994355939981784,
+      "mae": 0.4351525902164439,
+      "r2": 0.5876500362326196
+    },
+    "points": 93,
+    "excluded_drop_numbers": [
+      90
+    ]
+  },
+  "tds_factor": 0.5,
+  "notes": [
+    "Data collected with saturated NaCl drops into 500 mL tap water.",
+    "Target calibration range extends to ~20 mS/cm."
+  ]
+}
